@@ -2,329 +2,366 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PGDD - Personal Geometry Dash Demonlist</title>
-<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+<title>PGDD</title>
+
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg'><rect width='100%25' height='100%25' fill='%230000FF'/></svg>">
+
 <style>
-/* ---------- GENERAL ---------- */
-body { font-family:'Segoe UI', sans-serif; background:#1a1a1a; color:#eee; margin:0; padding:0; }
-header { background:#0000FF; color:white; text-align:center; padding:20px; position:relative; }
-header .main-title { font-size:3em; font-weight:bold; }
-header .subtitle { font-size:1.2em; margin-top:4px; opacity:0.8; }
-header .info-icon { position:absolute; right:20px; top:22px; cursor:pointer; font-size:1.2em; }
-header .info-tooltip { display:none; position:absolute; right:50px; top:22px; background:#333; color:#eee; padding:6px 10px; border-radius:6px; font-size:0.9em; max-width:200px; text-align:left; }
-header .info-icon:hover + .info-tooltip { display:block; }
+*{box-sizing:border-box;}
+body{margin:0;font-family:Segoe UI;background:#121212;color:#eee;}
+header{background:#0000FF;padding:20px;text-align:center;color:white;}
+#user-title{font-size:2.3em;text-align:center;margin:20px 0;font-weight:bold;}
 
-main { max-width:900px; margin:30px auto; padding:0 20px; position:relative; }
-
-/* ---------- BUTTONS ---------- */
-button { cursor:pointer; border:none; transition:0.2s; }
-button:hover { transform:scale(1.05); }
-#add-btn, #export-btn {
-  border-radius:50%; width:50px; height:50px; font-size:20px; display:flex; justify-content:center; align-items:center;
-  background:#0000FF; color:white;
+h1 {
+  font-size: 7rem; /* más grande que el tamaño predeterminado */
 }
-#add-btn:hover, #export-btn:hover { background:#0000CC; }
 
-/* ---------- LEVEL LIST ---------- */
-.level-list { list-style:none; padding:0; display:flex; flex-direction:column; gap:14px; }
-.level-item { position:relative; border-radius:8px; display:flex; align-items:center; gap:12px; padding:16px; cursor:grab; overflow:hidden;
-  border:1px solid #555; background:#222; }
-.level-position, .level-info, .drag-handle, .info-btn { position:relative; z-index:1; }
-.level-position { font-size:1.8em; font-weight:bold; width:50px; text-align:center; }
-.level-thumb { height:100px; width:auto; border-radius:6px; object-fit:cover; filter:brightness(0.9); transition:0.3s; cursor:pointer; }
-.level-thumb:hover { filter:brightness(1.05); }
-.level-info { flex:1; display:flex; flex-direction:column; gap:6px; padding-left:10px; }
-.level-info .name { font-size:1.2em; font-weight:bold; }
-.level-info .creator { opacity:0.8; }
-.drag-handle { font-size:1.4em; opacity:0.6; user-select:none; cursor:grab; }
-.info-btn { background:#555; padding:4px 8px; border-radius:50%; font-weight:bold; }
+#changelog{
+position:fixed;top:10px;left:10px;font-size:0.8em;
+background:#222;padding:10px;border-radius:8px;max-width:250px;
+}
 
-/* ---------- MODALS ---------- */
-.modal { display:none; position:fixed; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.85); align-items:center; justify-content:center; z-index:100; }
-.modal.show { display:flex; }
-.modal-content { background:#1f1f1f; padding:20px; border-radius:8px; width:90%; max-width:420px; }
-.modal-content label { font-weight:bold; margin-top:6px; display:block; }
-.modal-content label .required { color:red; }
-.modal-content input, .modal-content textarea, .modal-content select { width:100%; padding:8px; margin-top:4px; border-radius:4px; background:#333; color:#eee; border:1px solid #555; }
-.modal-content textarea { resize:none; height:60px; }
+#info-icon{
+position:fixed;top:10px;right:10px;background:#333;border-radius:50%;
+width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;
+}
+#info-icon:hover::after{
+content:"Data is stored locally. Clearing browser data will erase everything.";
+position:absolute;top:40px;right:0;background:#222;padding:8px;border-radius:6px;
+width:220px;font-size:0.8em;
+}
 
-.empty-message { text-align:center; opacity:0.7; margin-top:30px; font-style:italic; }
+#list{max-width:950px;margin:auto;padding:10px;}
+.level{
+display:flex;gap:15px;background:#1e1e1e;padding:16px;margin-bottom:12px;
+border:1px solid #444;border-radius:12px;align-items:center;cursor:grab;
+}
+.level.dragging{opacity:0.5;}
+.pos{font-size:2em;width:60px;text-align:center;font-weight:bold;}
+.thumb{height:110px;border-radius:8px;}
+.info{flex:1;font-size:1.1em;}
+.actions{display:flex;gap:6px;}
 
-/* FULLSCREEN IMAGE MODAL */
-#image-modal .modal-content { width:90%; max-width:none; max-height:90%; display:flex; flex-direction:column; background:transparent; padding:0; border-radius:0; }
-#image-modal img { max-height:80vh; margin:auto; border-radius:8px; object-fit:contain; }
-#image-footer { display:flex; justify-content:space-between; color:#eee; padding:8px; background:rgba(0,0,0,0.7); border-radius:0 0 8px 8px; font-weight:bold; }
+.btn{background:#333;color:white;border:none;padding:8px 10px;border-radius:6px;cursor:pointer;}
+.btn:hover{background:#555;}
 
-/* INFO MODAL BUTTONS */
-#info-content .edit-btn { background:#007BFF; color:white; border-radius:4px; padding:6px 12px; margin-right:6px; }
-#info-content .delete-btn { background:#DC3545; color:white; border-radius:4px; padding:6px 12px; }
-#info-content .close-btn { background:#555; color:white; border-radius:4px; padding:6px 12px; float:right; }
+#empty{text-align:center;opacity:0.6;margin-top:30px;}
 
+.floating{
+position:fixed;bottom:20px;right:20px;display:flex;flex-direction:column;gap:10px;
+}
+.circle{
+width:60px;height:60px;border-radius:50%;border:none;background:#0000FF;color:white;
+font-size:26px;cursor:pointer;
+}
+.circle:hover{background:#1a1aff;}
+
+.modal{position:fixed;inset:0;background:rgba(0,0,0,0.8);display:none;align-items:center;justify-content:center;}
+.modal.show{display:flex;}
+.box{background:#1f1f1f;padding:20px;border-radius:10px;width:90%;max-width:420px;}
+
+input,select,textarea{
+width:100%;margin-top:8px;padding:8px;background:#2a2a2a;border:1px solid #444;color:white;border-radius:6px;
+}
+textarea{height:60px;}
+
+.row{display:flex;justify-content:space-between;margin-top:15px;}
+.primary{background:#0000FF;}
+.danger{background:#aa2222;}
 </style>
 </head>
+
 <body>
 
 <header>
-  <div class="main-title">PGDD</div>
-  <div class="subtitle">Personal Geometry Dash Demonlist</div>
-  <span class="info-icon">i</span>
-  <div class="info-tooltip">All your data is saved locally on this device. Nothing is synced to the cloud.</div>
+<h1>PGDD</h1>   
+<p>Personal Geometry Dash Demonlist</p>
 </header>
 
-<main>
-  <div style="display:flex; justify-content:flex-end; gap:10px; margin-bottom:20px;">
-    <button id="add-btn">+</button>
-    <button id="export-btn"><span class="material-icons">file_upload</span></button>
-  </div>
-  <ul class="level-list" id="level-list"></ul>
-  <div class="empty-message" id="empty-msg">No levels in your Demonlist yet</div>
-</main>
-
-<!-- USERNAME MODAL -->
-<div class="modal" id="username-modal">
-  <div class="modal-content">
-    <div style="font-size:1.3em; margin-bottom:8px;">Enter your username</div>
-    <input type="text" id="username-input" placeholder="Username">
-    <div style="display:flex; justify-content:flex-end; margin-top:12px;">
-      <button id="username-submit-btn">Submit</button>
-    </div>
-  </div>
+<div id="changelog">
+Changelog: <br>
+1.0 - Initial Release <br>
+1.1 - Level Thumbnails API Added
 </div>
 
-<!-- ADD / EDIT MODAL -->
-<div class="modal" id="add-modal">
-  <div class="modal-content">
-    <div style="font-size:1.3em; margin-bottom:8px;" id="modal-title">Submit a Record</div>
-    <label>Name <span class="required">*</span></label>
-    <input type="text" id="modal-level-name">
-    <label>Creator <span class="required">*</span></label>
-    <input type="text" id="modal-level-creator">
-    <label>Position <span class="required">*</span></label>
-    <input type="number" id="modal-position" min="1">
-    <label>Description</label>
-    <textarea id="modal-level-desc"></textarea>
-    <label>Attempts</label>
-    <input type="number" id="modal-attempts" min="0">
-    <label>Enjoyment (1–10)</label>
-    <input type="number" id="modal-enjoyment" min="1" max="10">
-    <label>In-Game Difficulty</label>
-    <select id="modal-igd">
-      <option>Easy Demon</option>
-      <option>Medium Demon</option>
-      <option>Hard Demon</option>
-      <option>Insane Demon</option>
-      <option selected>Extreme Demon</option>
-    </select>
-    <label>Thumbnail (jpg/png only)</label>
-    <input type="file" id="modal-level-thumb" accept=".jpg,.png">
-    <label>Level ID</label>
-    <input type="text" id="modal-level-id" placeholder="Ex: 12345678">
-    <div style="display:flex; justify-content:space-between; margin-top:12px;">
-      <button id="modal-cancel-btn">Cancel</button>
-      <button id="modal-add-level-btn">Submit</button>
-    </div>
-  </div>
+<div id="info-icon">i</div>
+<div id="user-title"></div>
+
+<ul id="list"></ul>
+<div id="empty">No submissions here. Submit a record for it to appear here :)</div>
+
+<div class="floating">
+<button class="circle" onclick="openForm()">+</button>
+<button class="circle" onclick="exportMsg()">⤴</button>
+</div>
+
+<!-- USER -->
+<div class="modal" id="userModal">
+<div class="box">
+<h3>Enter username</h3>
+<input id="usernameInput">
+<button class="btn primary" onclick="setUser()">Continue</button>
+</div>
+</div>
+
+<!-- FORM -->
+<div class="modal" id="formModal">
+<div class="box">
+<h2>Submit a Record</h2>
+
+<input id="name" placeholder="Name *">
+<input id="creator" placeholder="Creator *">
+<input id="position" type="number" placeholder="List position *">
+<input id="levelid" placeholder="Level ID *">
+
+<select id="imgmode">
+<option value="id">Use Level Thumbnail API</option>
+<option value="upload">Upload image</option>
+</select>
+
+<input type="file" id="file" accept=".jpg,.png">
+
+<textarea id="desc" placeholder="Description"></textarea>
+<input id="attempts" type="number" placeholder="Attempts">
+<input id="enjoyment" type="number" min="1" max="10" placeholder="Enjoyment (1-10)">
+
+<select id="difficulty">
+<option>Easy Demon</option>
+<option>Medium Demon</option>
+<option>Hard Demon</option>
+<option>Insane Demon</option>
+<option selected>Extreme Demon</option>
+</select>
+
+<select id="type">
+<option>Classic</option>
+<option>Platformer</option>
+</select>
+
+<div class="row">
+<button class="btn" onclick="closeForm()">Cancel</button>
+<button class="btn primary" onclick="submitLevel()">Submit</button>
+</div>
+
+</div>
 </div>
 
 <!-- INFO MODAL -->
-<div class="modal" id="info-modal">
-  <div class="modal-content" id="info-content"></div>
-</div>
-
-<!-- FULLSCREEN IMAGE MODAL -->
-<div class="modal" id="image-modal">
-  <div class="modal-content">
-    <img id="image-modal-img" src="">
-    <div id="image-footer">
-      <div id="image-modal-lvlid"></div>
-      <div id="image-modal-name-creator"></div>
-    </div>
-    <button class="close-btn" onclick="document.getElementById('image-modal').classList.remove('show')" style="margin-top:6px;">Close</button>
-  </div>
+<div class="modal" id="infoModal">
+<div class="box" id="infoBox"></div>
 </div>
 
 <script>
-// ---------- USERNAME ----------
-let username = localStorage.getItem("pgdd_username")||"";
-const usernameModal = document.getElementById("username-modal");
-const usernameInput = document.getElementById("username-input");
-const usernameSubmitBtn = document.getElementById("username-submit-btn");
-if(!username){ usernameModal.classList.add("show"); }
-usernameSubmitBtn.onclick = ()=>{
-  const val = usernameInput.value.trim();
-  if(!val) return alert("Enter a valid username");
-  username = val;
-  localStorage.setItem("pgdd_username",username);
-  usernameModal.classList.remove("show");
-};
+// USER
+let username=localStorage.getItem("username");
+if(!username){document.getElementById("userModal").classList.add("show");}
 
-// ---------- STORAGE ----------
-const STORAGE_KEY = "pgdd_levels";
-let levels = JSON.parse(localStorage.getItem(STORAGE_KEY)||"[]");
-
-// ---------- ELEMENTS ----------
-const levelList = document.getElementById('level-list');
-const emptyMsg = document.getElementById('empty-msg');
-const addBtn = document.getElementById('add-btn');
-const addModal = document.getElementById('add-modal');
-const modalTitle = document.getElementById('modal-title');
-const modalAddBtn = document.getElementById('modal-add-level-btn');
-const modalCancelBtn = document.getElementById('modal-cancel-btn');
-const exportBtn = document.getElementById('export-btn');
-
-const fldName = document.getElementById('modal-level-name');
-const fldCreator = document.getElementById('modal-level-creator');
-const fldPos = document.getElementById('modal-position');
-const fldDesc = document.getElementById('modal-level-desc');
-const fldAtts = document.getElementById('modal-attempts');
-const fldEnjoy = document.getElementById('modal-enjoyment');
-const fldIGD = document.getElementById('modal-igd');
-const fldThumb = document.getElementById('modal-level-thumb');
-const fldID = document.getElementById('modal-level-id');
-
-let editIndex = null;
-let editThumb = null;
-
-// ---------- MODAL FUNCTIONS ----------
-function openModal(editData=null,index=null){
-  addModal.classList.add("show");
-  if(editData){
-    modalTitle.textContent = "Edit Level";
-    modalAddBtn.textContent = "Submit";
-    editIndex=index;
-    fldName.value=editData.name;
-    fldCreator.value=editData.creator;
-    fldPos.value=index+1;
-    fldDesc.value=editData.desc;
-    fldAtts.value=editData.attempts;
-    fldEnjoy.value=editData.enjoyment;
-    fldIGD.value=editData.igd;
-    fldID.value=editData.id;
-    fldThumb.value="";
-    editThumb = editData.thumb || "";
-  } else {
-    modalTitle.textContent = "Submit a Record";
-    modalAddBtn.textContent = "Submit";
-    editIndex=null;
-    editThumb = null;
-    [fldName,fldCreator,fldPos,fldDesc,fldAtts,fldEnjoy,fldIGD,fldThumb,fldID].forEach(f=>f.value="");
-  }
+function setUser(){
+let v=document.getElementById("usernameInput").value.trim();
+if(!v){alert("Username required");return;}
+username=v;
+localStorage.setItem("username",v);
+document.getElementById("userModal").classList.remove("show");
+updateTitle();
 }
-addBtn.onclick = ()=>openModal();
-modalCancelBtn.onclick = ()=>{ addModal.classList.remove('show'); editThumb=null; };
+function updateTitle(){
+document.getElementById("user-title").textContent=username+"'s Demonlist";
+}
+updateTitle();
 
-// ---------- SAVE LEVEL ----------
-modalAddBtn.onclick = ()=>{
-  const name=fldName.value.trim();
-  const creator=fldCreator.value.trim();
-  const pos=parseInt(fldPos.value);
-  let attempts=parseInt(fldAtts.value)||0;
-  let enjoyment=parseInt(fldEnjoy.value)||1;
-  const igd=fldIGD.value;
-  const desc=fldDesc.value.trim();
-  const id=fldID.value.trim();
-  const file=fldThumb.files[0];
+// STORAGE
+let levels=JSON.parse(localStorage.getItem("levels")||"[]");
+let editIndex=null;
 
-  if(!name||!creator||!pos){ alert("Please fill required fields (*)"); return; }
-  if(enjoyment<1) enjoyment=1; if(enjoyment>10) enjoyment=10;
-  if(file && !["image/png","image/jpeg"].includes(file.type)){ alert("Only JPG/PNG allowed"); return; }
+// IMAGE MODE
+const fileInput = document.getElementById("file");
+const imgMode = document.getElementById("imgmode");
+fileInput.style.display = "none";
 
-  function saveLevel(thumbData){
-    const level={name,creator,desc,attempts,enjoyment,igd,thumb:thumbData||editThumb||"",id,position:pos};
-    if(editIndex!==null) levels.splice(editIndex,1);
-    const index=Math.min(Math.max(pos-1,0),levels.length);
-    levels.splice(index,0,level);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(levels));
-    renderLevels(); addModal.classList.remove("show"); editIndex=null; editThumb=null;
-  }
+imgMode.addEventListener("change", ()=>{
+fileInput.style.display = imgMode.value==="upload"?"block":"none";
+});
 
-  if(file){
-    const reader=new FileReader();
-    reader.onload=e=>{ editThumb=e.target.result; saveLevel(editThumb); };
-    reader.readAsDataURL(file);
-  } else saveLevel();
-};
-
-// ---------- RENDER LEVELS ----------
-function renderLevels(){
-  levelList.innerHTML="";
-  if(levels.length===0){ emptyMsg.style.display="block"; return; }
-  emptyMsg.style.display="none";
-
-  levels.forEach((lvl,i)=>{
-    const li=document.createElement('li');
-    li.className="level-item"; li.draggable=true;
-    li.innerHTML=`
-      <div class="level-position">#${i+1}</div>
-      <img class="level-thumb" src="${lvl.thumb||''}">
-      <div class="level-info">
-        <div class="name">${lvl.name}</div>
-        <div class="creator">${lvl.creator}</div>
-      </div>
-      <div style="margin-left:auto; display:flex; gap:10px; align-items:center;">
-        <span class="drag-handle">≡</span>
-        <button class="info-btn">i</button>
-      </div>
-    `;
-
-    li.querySelector(".level-thumb").onclick = ()=>openImageModal(lvl);
-    li.querySelector(".info-btn").onclick = ()=>openInfoPopup(lvl,i);
-
-    li.addEventListener("dragstart", e=>e.dataTransfer.setData("text/plain",i));
-    li.addEventListener("dragover", e=>e.preventDefault());
-    li.addEventListener("drop", e=>{
-      const from = e.dataTransfer.getData("text/plain");
-      [levels[from], levels[i]] = [levels[i], levels[from]];
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(levels));
-      renderLevels();
-    });
-
-    levelList.appendChild(li);
-  });
+// RESET FORM
+function resetForm(){
+document.getElementById("name").value="";
+document.getElementById("creator").value="";
+document.getElementById("position").value="";
+document.getElementById("levelid").value="";
+document.getElementById("desc").value="";
+document.getElementById("attempts").value="";
+document.getElementById("enjoyment").value="";
+document.getElementById("difficulty").value="Extreme Demon";
+document.getElementById("type").value="Classic";
+imgMode.value="id";
+fileInput.value="";
+fileInput.style.display="none";
 }
 
-// ---------- IMAGE MODAL ----------
-const imageModal = document.getElementById("image-modal");
-const imageModalImg = document.getElementById("image-modal-img");
-const imageModalLvlID = document.getElementById("image-modal-lvlid");
-const imageModalNameCreator = document.getElementById("image-modal-name-creator");
-function openImageModal(level){
-  imageModalImg.src = level.thumb||"";
-  imageModalLvlID.textContent = `Level ID: ${level.id||""}`;
-  imageModalNameCreator.textContent = `${level.name} • ${level.creator}`;
-  imageModal.classList.add("show");
+// FORM
+function openForm(){
+editIndex=null;
+resetForm();
+document.getElementById("formModal").classList.add("show");
+}
+function closeForm(){
+document.getElementById("formModal").classList.remove("show");
 }
 
-// ---------- INFO MODAL ----------
-const infoModal = document.getElementById("info-modal");
-const infoContent = document.getElementById("info-content");
-function openInfoPopup(level,index){
-  editThumb = level.thumb; 
-  infoContent.innerHTML=`
-    <div style="font-size:1.3em; font-weight:bold; margin-bottom:8px;">${level.name}</div>
-    <p><strong>Creator:</strong> ${level.creator}</p>
-    <p><strong>Position:</strong> ${level.position}</p>
-    <p><strong>Attempts:</strong> ${level.attempts}</p>
-    <p><strong>Enjoyment:</strong> ${level.enjoyment}</p>
-    <p><strong>IGD:</strong> ${level.igd}</p>
-    <p><strong>Description:</strong> ${level.desc}</p>
-    <p><strong>Level ID:</strong> ${level.id}</p>
-    <div style="margin-top:12px; display:flex; justify-content:flex-start; gap:6px;">
-      <button class="edit-btn">Edit</button>
-      <button class="delete-btn">Delete</button>
-      <button class="close-btn" onclick="infoModal.classList.remove('show')">Close</button>
-    </div>
-  `;
-  infoModal.classList.add("show");
-  document.querySelector(".edit-btn").onclick = ()=>{ infoModal.classList.remove("show"); openModal(level,index); };
-  document.querySelector(".delete-btn").onclick = ()=>{ if(confirm("Delete this level?")){ levels.splice(index,1); localStorage.setItem(STORAGE_KEY, JSON.stringify(levels)); renderLevels(); infoModal.classList.remove("show"); editThumb=null; } };
+// SUBMIT
+function submitLevel(){
+const name=document.getElementById("name").value.trim();
+const creator=document.getElementById("creator").value.trim();
+const pos=parseInt(document.getElementById("position").value);
+const id=document.getElementById("levelid").value.trim();
+const desc=document.getElementById("desc").value;
+const attempts=parseInt(document.getElementById("attempts").value)||0;
+const enjoyment=parseInt(document.getElementById("enjoyment").value)||1;
+const difficulty=document.getElementById("difficulty").value;
+const type=document.getElementById("type").value;
+
+if(!name||!creator||!pos||!id){alert("Fill required fields");return;}
+if(enjoyment<1||enjoyment>10){alert("Enjoyment must be 1-10");return;}
+
+function save(thumb){
+const obj={name,creator,id,thumb,desc,attempts,enjoyment,difficulty,type};
+
+if(editIndex!==null){
+levels[editIndex]=obj;
+}else{
+levels.splice(pos-1,0,obj);
 }
 
-// ---------- EXPORT ----------
-exportBtn.onclick = ()=>{ alert("Export feature is in the works, for now you can just screenshot"); };
+localStorage.setItem("levels",JSON.stringify(levels));
+render();
+}
 
-renderLevels();
+if(imgMode.value==="upload" && fileInput.files[0]){
+const r=new FileReader();
+r.onload=e=>save(e.target.result);
+r.readAsDataURL(fileInput.files[0]);
+}else{
+save(`https://levelthumbs.prevter.me/thumbnail/${id}`);
+}
+
+closeForm();
+resetForm();
+}
+
+// RENDER
+function render(){
+const list=document.getElementById("list");
+list.innerHTML="";
+document.getElementById("empty").style.display=levels.length?"none":"block";
+
+levels.forEach((l,i)=>{
+const li=document.createElement("li");
+li.className="level";
+li.draggable=true;
+li.dataset.index=i;
+
+li.innerHTML=`
+<div class="pos">#${i+1}</div>
+<img class="thumb" src="${l.thumb}">
+<div class="info">
+<b>${l.name}</b><br>${l.creator}<br>${l.type}
+</div>
+<div class="actions">
+<button class="btn" onclick="openInfo(${i})">i</button>
+</div>
+`;
+
+li.addEventListener("dragstart",()=>{li.classList.add("dragging");});
+li.addEventListener("dragend",()=>{li.classList.remove("dragging");updateOrder();});
+
+list.appendChild(li);
+});
+}
+render();
+
+// DRAG & DROP
+const list=document.getElementById("list");
+
+list.addEventListener("dragover",(e)=>{
+e.preventDefault();
+const dragging=document.querySelector(".dragging");
+const after=getAfter(e.clientY);
+if(!dragging) return;
+if(after==null){list.appendChild(dragging);}
+else{list.insertBefore(dragging,after);}
+});
+
+function getAfter(y){
+const els=[...document.querySelectorAll(".level:not(.dragging)")];
+return els.reduce((closest,child)=>{
+const box=child.getBoundingClientRect();
+const offset=y-box.top-box.height/2;
+if(offset<0 && offset>closest.offset){return {offset,element:child};}else{return closest;}
+},{offset:Number.NEGATIVE_INFINITY}).element;
+}
+
+function updateOrder(){
+const items=[...document.querySelectorAll(".level")];
+levels=items.map(el=>levels[el.dataset.index]);
+localStorage.setItem("levels",JSON.stringify(levels));
+render();
+}
+
+// INFO MODAL
+function openInfo(i){
+const l=levels[i];
+document.getElementById("infoBox").innerHTML=`
+<h3>${l.name}</h3>
+<p>ID: ${l.id}</p>
+<p>Description: ${l.desc}</p>
+<p>Attempts: ${l.attempts}</p>
+<p>Enjoyment: ${l.enjoyment}</p>
+<p>Difficulty: ${l.difficulty}</p>
+<p>Type: ${l.type}</p>
+<div class="row">
+<button class="btn" onclick="closeInfo()">OK</button>
+<button class="btn primary" onclick="edit(${i})">Edit Info</button>
+<button class="btn danger" onclick="del(${i})">Delete Record</button>
+</div>
+`;
+document.getElementById("infoModal").classList.add("show");
+}
+
+function closeInfo(){document.getElementById("infoModal").classList.remove("show");}
+
+// EDIT
+function edit(i){
+const l=levels[i];
+editIndex=i;
+
+document.getElementById("name").value=l.name;
+document.getElementById("creator").value=l.creator;
+document.getElementById("position").value=i+1;
+document.getElementById("levelid").value=l.id;
+document.getElementById("desc").value=l.desc;
+document.getElementById("attempts").value=l.attempts;
+document.getElementById("enjoyment").value=l.enjoyment;
+document.getElementById("difficulty").value=l.difficulty;
+document.getElementById("type").value=l.type;
+
+closeInfo();
+document.getElementById("formModal").classList.add("show");
+}
+
+// DELETE
+function del(i){
+if(confirm("This action is irreversible. Continue?")){
+levels.splice(i,1);
+localStorage.setItem("levels",JSON.stringify(levels));
+render();
+closeInfo();
+}
+}
+
+// EXPORT
+function exportMsg(){
+alert("Export feature is in the works, for now you can just screenshot.");
+}
 </script>
 
 </body>
