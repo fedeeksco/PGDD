@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PGDD - Personal Geometry Dash Demonlist</title>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+<style>
+/* ---------- GENERAL ---------- */
+body { font-family:'Segoe UI', sans-serif; background:#1a1a1a; color:#eee; margin:0; padding:0; }
+header { background:#0000FF; color:white; text-align:center; padding:20px; position:relative; }
+header .main-title { font-size:3em; font-weight:bold; }
+header .subtitle { font-size:1.2em; margin-top:4px; opacity:0.8; }
+header .info-icon { position:absolute; right:20px; top:22px; cursor:pointer; font-size:1.2em; }
+header .info-tooltip { display:none; position:absolute; right:50px; top:22px; background:#333; color:#eee; padding:6px 10px; border-radius:6px; font-size:0.9em; max-width:200px; text-align:left; }
+header .info-icon:hover + .info-tooltip { display:block; }
+
+main { max-width:900px; margin:30px auto; padding:0 20px; position:relative; }
+
+/* ---------- BUTTONS ---------- */
+button { cursor:pointer; border:none; transition:0.2s; }
+button:hover { transform:scale(1.05); }
+#add-btn, #export-btn {
+  border-radius:50%; width:50px; height:50px; font-size:20px; display:flex; justify-content:center; align-items:center;
+  background:#0000FF; color:white;
+}
+#add-btn:hover, #export-btn:hover { background:#0000CC; }
+
+/* ---------- LEVEL LIST ---------- */
+.level-list { list-style:none; padding:0; display:flex; flex-direction:column; gap:14px; }
+.level-item { position:relative; border-radius:8px; display:flex; align-items:center; gap:12px; padding:16px; cursor:grab; overflow:hidden;
+  border:1px solid #555; background:#222; }
+.level-position, .level-info, .drag-handle, .info-btn { position:relative; z-index:1; }
+.level-position { font-size:1.8em; font-weight:bold; width:50px; text-align:center; }
+.level-thumb { height:100px; width:auto; border-radius:6px; object-fit:cover; filter:brightness(0.9); transition:0.3s; cursor:pointer; }
+.level-thumb:hover { filter:brightness(1.05); }
+.level-info { flex:1; display:flex; flex-direction:column; gap:6px; padding-left:10px; }
+.level-info .name { font-size:1.2em; font-weight:bold; }
+.level-info .creator { opacity:0.8; }
+.drag-handle { font-size:1.4em; opacity:0.6; user-select:none; cursor:grab; }
+.info-btn { background:#555; padding:4px 8px; border-radius:50%; font-weight:bold; }
+
+/* ---------- MODALS ---------- */
+.modal { display:none; position:fixed; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.85); align-items:center; justify-content:center; z-index:100; }
+.modal.show { display:flex; }
+.modal-content { background:#1f1f1f; padding:20px; border-radius:8px; width:90%; max-width:420px; }
+.modal-content label { font-weight:bold; margin-top:6px; display:block; }
+.modal-content label .required { color:red; }
+.modal-content input, .modal-content textarea, .modal-content select { width:100%; padding:8px; margin-top:4px; border-radius:4px; background:#333; color:#eee; border:1px solid #555; }
+.modal-content textarea { resize:none; height:60px; }
+
+.empty-message { text-align:center; opacity:0.7; margin-top:30px; font-style:italic; }
+
+/* FULLSCREEN IMAGE MODAL */
+#image-modal .modal-content { width:90%; max-width:none; max-height:90%; display:flex; flex-direction:column; background:transparent; padding:0; border-radius:0; }
+#image-modal img { max-height:80vh; margin:auto; border-radius:8px; object-fit:contain; }
+#image-footer { display:flex; justify-content:space-between; color:#eee; padding:8px; background:rgba(0,0,0,0.7); border-radius:0 0 8px 8px; font-weight:bold; }
+
+/* INFO MODAL BUTTONS */
+#info-content .edit-btn { background:#007BFF; color:white; border-radius:4px; padding:6px 12px; margin-right:6px; }
+#info-content .delete-btn { background:#DC3545; color:white; border-radius:4px; padding:6px 12px; }
+#info-content .close-btn { background:#555; color:white; border-radius:4px; padding:6px 12px; float:right; }
+
+</style>
+</head>
+<body>
+
+<header>
+  <div class="main-title">PGDD</div>
+  <div class="subtitle">Personal Geometry Dash Demonlist</div>
+  <span class="info-icon">i</span>
+  <div class="info-tooltip">All your data is saved locally on this device. Nothing is synced to the cloud.</div>
+</header>
+
+<main>
+  <div style="display:flex; justify-content:flex-end; gap:10px; margin-bottom:20px;">
+    <button id="add-btn">+</button>
+    <button id="export-btn"><span class="material-icons">file_upload</span></button>
+  </div>
+  <ul class="level-list" id="level-list"></ul>
+  <div class="empty-message" id="empty-msg">No levels in your Demonlist yet</div>
+</main>
+
+<!-- USERNAME MODAL -->
+<div class="modal" id="username-modal">
+  <div class="modal-content">
+    <div style="font-size:1.3em; margin-bottom:8px;">Enter your username</div>
+    <input type="text" id="username-input" placeholder="Username">
+    <div style="display:flex; justify-content:flex-end; margin-top:12px;">
+      <button id="username-submit-btn">Submit</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD / EDIT MODAL -->
+<div class="modal" id="add-modal">
+  <div class="modal-content">
+    <div style="font-size:1.3em; margin-bottom:8px;" id="modal-title">Submit a Record</div>
+    <label>Name <span class="required">*</span></label>
+    <input type="text" id="modal-level-name">
+    <label>Creator <span class="required">*</span></label>
+    <input type="text" id="modal-level-creator">
+    <label>Position <span class="required">*</span></label>
+    <input type="number" id="modal-position" min="1">
+    <label>Description</label>
+    <textarea id="modal-level-desc"></textarea>
+    <label>Attempts</label>
+    <input type="number" id="modal-attempts" min="0">
+    <label>Enjoyment (1–10)</label>
+    <input type="number" id="modal-enjoyment" min="1" max="10">
+    <label>In-Game Difficulty</label>
+    <select id="modal-igd">
+      <option>Easy Demon</option>
+      <option>Medium Demon</option>
+      <option>Hard Demon</option>
+      <option>Insane Demon</option>
+      <option selected>Extreme Demon</option>
+    </select>
+    <label>Thumbnail (jpg/png only)</label>
+    <input type="file" id="modal-level-thumb" accept=".jpg,.png">
+    <label>Level ID</label>
+    <input type="text" id="modal-level-id" placeholder="Ex: 12345678">
+    <div style="display:flex; justify-content:space-between; margin-top:12px;">
+      <button id="modal-cancel-btn">Cancel</button>
+      <button id="modal-add-level-btn">Submit</button>
+    </div>
+  </div>
+</div>
+
+<!-- INFO MODAL -->
+<div class="modal" id="info-modal">
+  <div class="modal-content" id="info-content"></div>
+</div>
+
+<!-- FULLSCREEN IMAGE MODAL -->
+<div class="modal" id="image-modal">
+  <div class="modal-content">
+    <img id="image-modal-img" src="">
+    <div id="image-footer">
+      <div id="image-modal-lvlid"></div>
+      <div id="image-modal-name-creator"></div>
+    </div>
+    <button class="close-btn" onclick="document.getElementById('image-modal').classList.remove('show')" style="margin-top:6px;">Close</button>
+  </div>
+</div>
+
+<script>
+// ---------- USERNAME ----------
+let username = localStorage.getItem("pgdd_username")||"";
+const usernameModal = document.getElementById("username-modal");
+const usernameInput = document.getElementById("username-input");
+const usernameSubmitBtn = document.getElementById("username-submit-btn");
+if(!username){ usernameModal.classList.add("show"); }
+usernameSubmitBtn.onclick = ()=>{
+  const val = usernameInput.value.trim();
+  if(!val) return alert("Enter a valid username");
+  username = val;
+  localStorage.setItem("pgdd_username",username);
+  usernameModal.classList.remove("show");
+};
+
+// ---------- STORAGE ----------
+const STORAGE_KEY = "pgdd_levels";
+let levels = JSON.parse(localStorage.getItem(STORAGE_KEY)||"[]");
+
+// ---------- ELEMENTS ----------
+const levelList = document.getElementById('level-list');
+const emptyMsg = document.getElementById('empty-msg');
+const addBtn = document.getElementById('add-btn');
+const addModal = document.getElementById('add-modal');
+const modalTitle = document.getElementById('modal-title');
+const modalAddBtn = document.getElementById('modal-add-level-btn');
+const modalCancelBtn = document.getElementById('modal-cancel-btn');
+const exportBtn = document.getElementById('export-btn');
+
+const fldName = document.getElementById('modal-level-name');
+const fldCreator = document.getElementById('modal-level-creator');
+const fldPos = document.getElementById('modal-position');
+const fldDesc = document.getElementById('modal-level-desc');
+const fldAtts = document.getElementById('modal-attempts');
+const fldEnjoy = document.getElementById('modal-enjoyment');
+const fldIGD = document.getElementById('modal-igd');
+const fldThumb = document.getElementById('modal-level-thumb');
+const fldID = document.getElementById('modal-level-id');
+
+let editIndex = null;
+let editThumb = null;
+
+// ---------- MODAL FUNCTIONS ----------
+function openModal(editData=null,index=null){
+  addModal.classList.add("show");
+  if(editData){
+    modalTitle.textContent = "Edit Level";
+    modalAddBtn.textContent = "Submit";
+    editIndex=index;
+    fldName.value=editData.name;
+    fldCreator.value=editData.creator;
+    fldPos.value=index+1;
+    fldDesc.value=editData.desc;
+    fldAtts.value=editData.attempts;
+    fldEnjoy.value=editData.enjoyment;
+    fldIGD.value=editData.igd;
+    fldID.value=editData.id;
+    fldThumb.value="";
+    editThumb = editData.thumb || "";
+  } else {
+    modalTitle.textContent = "Submit a Record";
+    modalAddBtn.textContent = "Submit";
+    editIndex=null;
+    editThumb = null;
+    [fldName,fldCreator,fldPos,fldDesc,fldAtts,fldEnjoy,fldIGD,fldThumb,fldID].forEach(f=>f.value="");
+  }
+}
+addBtn.onclick = ()=>openModal();
+modalCancelBtn.onclick = ()=>{ addModal.classList.remove('show'); editThumb=null; };
+
+// ---------- SAVE LEVEL ----------
+modalAddBtn.onclick = ()=>{
+  const name=fldName.value.trim();
+  const creator=fldCreator.value.trim();
+  const pos=parseInt(fldPos.value);
+  let attempts=parseInt(fldAtts.value)||0;
+  let enjoyment=parseInt(fldEnjoy.value)||1;
+  const igd=fldIGD.value;
+  const desc=fldDesc.value.trim();
+  const id=fldID.value.trim();
+  const file=fldThumb.files[0];
+
+  if(!name||!creator||!pos){ alert("Please fill required fields (*)"); return; }
+  if(enjoyment<1) enjoyment=1; if(enjoyment>10) enjoyment=10;
+  if(file && !["image/png","image/jpeg"].includes(file.type)){ alert("Only JPG/PNG allowed"); return; }
+
+  function saveLevel(thumbData){
+    const level={name,creator,desc,attempts,enjoyment,igd,thumb:thumbData||editThumb||"",id,position:pos};
+    if(editIndex!==null) levels.splice(editIndex,1);
+    const index=Math.min(Math.max(pos-1,0),levels.length);
+    levels.splice(index,0,level);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(levels));
+    renderLevels(); addModal.classList.remove("show"); editIndex=null; editThumb=null;
+  }
+
+  if(file){
+    const reader=new FileReader();
+    reader.onload=e=>{ editThumb=e.target.result; saveLevel(editThumb); };
+    reader.readAsDataURL(file);
+  } else saveLevel();
+};
+
+// ---------- RENDER LEVELS ----------
+function renderLevels(){
+  levelList.innerHTML="";
+  if(levels.length===0){ emptyMsg.style.display="block"; return; }
+  emptyMsg.style.display="none";
+
+  levels.forEach((lvl,i)=>{
+    const li=document.createElement('li');
+    li.className="level-item"; li.draggable=true;
+    li.innerHTML=`
+      <div class="level-position">#${i+1}</div>
+      <img class="level-thumb" src="${lvl.thumb||''}">
+      <div class="level-info">
+        <div class="name">${lvl.name}</div>
+        <div class="creator">${lvl.creator}</div>
+      </div>
+      <div style="margin-left:auto; display:flex; gap:10px; align-items:center;">
+        <span class="drag-handle">≡</span>
+        <button class="info-btn">i</button>
+      </div>
+    `;
+
+    li.querySelector(".level-thumb").onclick = ()=>openImageModal(lvl);
+    li.querySelector(".info-btn").onclick = ()=>openInfoPopup(lvl,i);
+
+    li.addEventListener("dragstart", e=>e.dataTransfer.setData("text/plain",i));
+    li.addEventListener("dragover", e=>e.preventDefault());
+    li.addEventListener("drop", e=>{
+      const from = e.dataTransfer.getData("text/plain");
+      [levels[from], levels[i]] = [levels[i], levels[from]];
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(levels));
+      renderLevels();
+    });
+
+    levelList.appendChild(li);
+  });
+}
+
+// ---------- IMAGE MODAL ----------
+const imageModal = document.getElementById("image-modal");
+const imageModalImg = document.getElementById("image-modal-img");
+const imageModalLvlID = document.getElementById("image-modal-lvlid");
+const imageModalNameCreator = document.getElementById("image-modal-name-creator");
+function openImageModal(level){
+  imageModalImg.src = level.thumb||"";
+  imageModalLvlID.textContent = `Level ID: ${level.id||""}`;
+  imageModalNameCreator.textContent = `${level.name} • ${level.creator}`;
+  imageModal.classList.add("show");
+}
+
+// ---------- INFO MODAL ----------
+const infoModal = document.getElementById("info-modal");
+const infoContent = document.getElementById("info-content");
+function openInfoPopup(level,index){
+  editThumb = level.thumb; 
+  infoContent.innerHTML=`
+    <div style="font-size:1.3em; font-weight:bold; margin-bottom:8px;">${level.name}</div>
+    <p><strong>Creator:</strong> ${level.creator}</p>
+    <p><strong>Position:</strong> ${level.position}</p>
+    <p><strong>Attempts:</strong> ${level.attempts}</p>
+    <p><strong>Enjoyment:</strong> ${level.enjoyment}</p>
+    <p><strong>IGD:</strong> ${level.igd}</p>
+    <p><strong>Description:</strong> ${level.desc}</p>
+    <p><strong>Level ID:</strong> ${level.id}</p>
+    <div style="margin-top:12px; display:flex; justify-content:flex-start; gap:6px;">
+      <button class="edit-btn">Edit</button>
+      <button class="delete-btn">Delete</button>
+      <button class="close-btn" onclick="infoModal.classList.remove('show')">Close</button>
+    </div>
+  `;
+  infoModal.classList.add("show");
+  document.querySelector(".edit-btn").onclick = ()=>{ infoModal.classList.remove("show"); openModal(level,index); };
+  document.querySelector(".delete-btn").onclick = ()=>{ if(confirm("Delete this level?")){ levels.splice(index,1); localStorage.setItem(STORAGE_KEY, JSON.stringify(levels)); renderLevels(); infoModal.classList.remove("show"); editThumb=null; } };
+}
+
+// ---------- EXPORT ----------
+exportBtn.onclick = ()=>{ alert("Export feature is in the works, for now you can just screenshot"); };
+
+renderLevels();
+</script>
+
+</body>
+</html>
